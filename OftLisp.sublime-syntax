@@ -1,0 +1,117 @@
+%YAML 1.2
+---
+# Based on the built-in Lisp syntax.
+file_extensions:
+  - oft
+scope: source.oftlisp
+
+variables:
+  identifier: "#?[a-zA-Z+./$?*=<>_-][0-9a-zA-Z+./$?*=<>_-]*"
+
+contexts:
+  main:
+    - include: comments
+    - include: literal
+    - include: parens
+
+  args:
+    - include: comments
+    - include: literal
+    - match: "{{identifier}}"
+      scope: variable.oftlisp
+    - match: "\\)"
+      pop: true
+    - include: parens
+
+  comments:
+    - match: ";"
+      scope: punctuation.definition.comment.oftlisp
+      push: comment
+
+  expr:
+    - match: "(defnrec|defn|defmacro)(?:\\s+)({{identifier}})(?:\\s+)\\("
+      captures:
+        1: storage.type.function-type.oftlisp
+        2: entity.name.function.oftlisp
+      push: params
+    - match: "(def)\\s+({{identifier}})"
+      captures:
+        1: storage.type.oftlisp
+        2: variable.language.oftlisp
+    - match: "(import|module)(?:\\s+)({{identifier}})"
+      captures:
+        1: keyword.control.import.oftlisp
+        2: entity.name.module.oftlisp
+    - match: "\\."
+      scope: keyword.operator.oftlisp
+    - match: "=|/=|<>|<|<=|>|>=|\\+|-|\\*|/|mod"
+      scope: keyword.operator.arithmetic.oftlisp
+    - match: "\\b(bitand|bitnot|bitor|bitxor)\\b"
+      scope: keyword.operator.word.bitwise.oftlisp
+    - match: "\\b(and|not|or)\\b"
+      scope: keyword.operator.word.logic.oftlisp
+    - match: "\\b(aif|if|when|unless)\\b"
+      scope: keyword.control.conditional.oftlisp
+    - match: "\\bc[ad]+r\\b"
+      scope: entity.name.function.oftlisp
+    - match: "\\bthis\\b"
+      scope: variable.language.oftlisp
+    - match: "{{identifier}}"
+      scope: entity.name.function
+      push: args
+
+  literal:
+    - match: "\""
+      scope: punctuation.definition.string.begin.oftlisp
+      push: string
+    - match: "-?[0-9]+(\\.[0-9]+)?"
+      scope: constant.numeric.oftlisp
+    - match: "true|false|nil"
+      scope: constant.language.oftlisp
+
+  params:
+    - match: "\\.\\.\\."
+      scope: keyword.operator.varargs.oftlisp
+    - match: "{{identifier}}"
+      scope: variable.parameter.oftlisp
+    - match: "\\)"
+      pop: true
+
+  parens:
+    - match: "[(\\[]"
+      scope: punctuation.definition.group.begin.oftlisp
+      push: parens-inner
+    - match: "[)\\]]"
+      scope: invalid.illegal.stray-paren-end.oftlisp
+  parens-inner:
+    - meta_scope: meta.group.oftlisp
+    - match: "[)\\]]"
+      scope: punctuation.definition.group.end.oftlisp
+      pop: true
+    - include: comments
+    - include: literal
+    - include: expr
+    - include: parens
+
+  comment:
+    - meta_scope: comment.line.oftlisp
+    - match: "$"
+      pop: true
+    - match: "\\b(BUG|FIXME|TODO|XXX)\\b"
+      scope: invalid.deprecated
+
+  string:
+    - meta_scope: string.quoted.double.oftlisp
+    - match: "\\\\[\\\\\\\"abenrt]"
+      scope: constant.character.escape.oftlisp
+    - match: "\\\\x[0-9a-fA-F]{2}"
+      scope: constant.character.escape.oftlisp
+    - match: "\\\\u[0-9a-fA-F]{4}"
+      scope: constant.character.escape.oftlisp
+    - match: "\\\\U[0-9a-fA-F]{8}"
+      scope: constant.character.escape.oftlisp
+    - match: "\\\\."
+      scope: invalid.unknown-character-escape.oftlisp
+    - match: "\""
+      scope: punctuation.definition.string.end.oftlisp
+      pop: true
