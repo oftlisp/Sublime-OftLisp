@@ -10,55 +10,54 @@ variables:
 
 contexts:
   main:
-    - include: comments
+    - include: comment
     - include: literal
     - include: parens
 
   args:
-    - include: comments
+    - include: comment
     - include: literal
+    - include: special-symbols
     - match: "{{identifier}}"
       scope: variable.oftlisp
     - match: "\\)"
       pop: true
     - include: parens
 
-  comments:
+  comment:
     - match: ";"
       scope: punctuation.definition.comment.oftlisp
-      push: comment
+      push: comment-inner
+  comment-inner:
+    - meta_scope: comment.line.oftlisp
+    - match: "$"
+      pop: true
+    - match: "\\b(BUG|FIXME|TODO|XXX)\\b"
+      scope: invalid.deprecated
 
   expr:
+    - include: literal
     - match: "(defnrec|defn|defmacro)(?:\\s+)({{identifier}})(?:\\s+)\\("
       captures:
         1: storage.type.function-type.oftlisp
         2: entity.name.function.oftlisp
-      push: params
+      set:
+        - args
+        - params
     - match: "(def)\\s+({{identifier}})"
       captures:
         1: storage.type.oftlisp
         2: variable.language.oftlisp
+      set: args
     - match: "(import|module)(?:\\s+)({{identifier}})"
       captures:
         1: keyword.control.import.oftlisp
         2: entity.name.module.oftlisp
-    - match: "\\."
-      scope: keyword.operator.oftlisp
-    - match: "=|/=|<>|<|<=|>|>=|\\+|-|\\*|/|mod"
-      scope: keyword.operator.arithmetic.oftlisp
-    - match: "\\b(bitand|bitnot|bitor|bitxor)\\b"
-      scope: keyword.operator.word.bitwise.oftlisp
-    - match: "\\b(and|not|or)\\b"
-      scope: keyword.operator.word.logic.oftlisp
-    - match: "\\b(aif|if|when|unless)\\b"
-      scope: keyword.control.conditional.oftlisp
-    - match: "\\bc[ad]+r\\b"
-      scope: entity.name.function.oftlisp
-    - match: "\\bthis\\b"
-      scope: variable.language.oftlisp
+      set: args
+    - include: special-symbols
     - match: "{{identifier}}"
       scope: entity.name.function
-      push: args
+      set: args
 
   literal:
     - match: "\""
@@ -88,17 +87,34 @@ contexts:
     - match: "[)\\]]"
       scope: punctuation.definition.group.end.oftlisp
       pop: true
-    - include: comments
-    - include: literal
+    - include: comment
     - include: expr
     - include: parens
 
-  comment:
-    - meta_scope: comment.line.oftlisp
-    - match: "$"
-      pop: true
-    - match: "\\b(BUG|FIXME|TODO|XXX)\\b"
-      scope: invalid.deprecated
+  special-symbols:
+    - match: "\\."
+      scope: keyword.operator.oftlisp
+      set: args
+    - match: "=|/=|<>|<|<=|>|>=|\\+|-|\\*|/|\\bmod\\b"
+      scope: keyword.operator.arithmetic.oftlisp
+      set: args
+    - match: "\\b(bitand|bitnot|bitor|bitxor)\\b"
+      scope: keyword.operator.word.bitwise.oftlisp
+      set: args
+    - match: "\\b(and|not|or)\\b"
+      scope: keyword.operator.word.logic.oftlisp
+      set: args
+    - match: "\\b(aif|if|when|unless)\\b"
+      scope: keyword.control.conditional.oftlisp
+      set: args
+    - match: "\\bc[ad]+r\\b"
+      scope: entity.name.function.oftlisp
+      set: args
+    - match: "\\bprogn\\b"
+      scope: keyword.control.oftlisp
+      set: args
+    - match: "\\bthis\\b"
+      scope: variable.language.oftlisp
 
   string:
     - meta_scope: string.quoted.double.oftlisp
