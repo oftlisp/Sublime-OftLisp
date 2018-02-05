@@ -113,7 +113,7 @@ contexts:
     - match: "\\bprogn\\b"
       scope: keyword.control.oftlisp
       set: args
-    - match: "\\bthis\\b"
+    - match: "\\$|(\\b(this)\\b)"
       scope: variable.language.oftlisp
 
   string:
