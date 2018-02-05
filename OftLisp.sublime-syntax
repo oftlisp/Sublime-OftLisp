@@ -3,6 +3,7 @@
 # Based on the built-in Lisp syntax.
 file_extensions:
   - oft
+  - oftd
 scope: source.oftlisp
 
 variables:
